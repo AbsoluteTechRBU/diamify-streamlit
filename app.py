@@ -123,7 +123,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Try to get the image, use a placeholder if not found
-image_path = "./images.jpeg"
+image_path = "./diamante.jpeg"
 image_base64 = get_image_base64(image_path)
 
 # Card content
