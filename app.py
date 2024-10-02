@@ -11,6 +11,8 @@ if 'time_left' not in st.session_state:
     st.session_state.time_left = 60  # 60 seconds timer
 if 'timer_end' not in st.session_state:
     st.session_state.timer_end = False
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = None
 
 # Function to increment counter
 def increment_counter():
@@ -29,6 +31,7 @@ def get_image_base64(image_path):
 # Function to start the timer
 def start_timer():
     st.session_state.timer_started = True
+    st.session_state.start_time = time.time()
     st.session_state.time_left = 60  # Reset the timer to 60 seconds
     st.session_state.timer_end = False
 
@@ -127,38 +130,45 @@ image_path = "./diamante.jpeg"
 image_base64 = get_image_base64(image_path)
 
 # Card content
-st.markdown(f"""
-<div class="card">
-    {'<img src="data:image/jpeg;base64,' + image_base64 + '" width="150">' if image_base64 else '<div style="width:150px;height:150px;background-color:#4CAF50;margin:auto;"></div>'}
-    <h2 style="color: #333;">Diam Token</h2>
-    <p style="color: #555;">Diam Token is a revolutionary cryptocurrency that aims to transform the digital asset landscape. With its innovative blockchain technology and commitment to sustainability, Diamante Token offers a secure and eco-friendly investment opportunity.</p>
-    <div class="counter-container">
-        <div class="counter-value">Counter: {st.session_state.count}</div>
-        <div>Time left: {st.session_state.time_left} seconds</div>
+card_content = st.empty()
+
+# Button container
+_, button_col, _ = st.columns([1, 2, 1])
+
+def update_card_content():
+    card_content.markdown(f"""
+    <div class="card">
+        {'<img src="data:image/jpeg;base64,' + image_base64 + '" width="150">' if image_base64 else '<div style="width:150px;height:150px;background-color:#4CAF50;margin:auto;"></div>'}
+        <h2 style="color: #333;">Diam Token</h2>
+        <p style="color: #555;">Diam Token is a revolutionary cryptocurrency that aims to transform the digital asset landscape. With its innovative blockchain technology and commitment to sustainability, Diamante Token offers a secure and eco-friendly investment opportunity.</p>
+        <div class="counter-container">
+            <div class="counter-value">Counter: {st.session_state.count}</div>
+            <div>Time left: {st.session_state.time_left} seconds</div>
+        </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# Start Timer button
-if not st.session_state.timer_started:
-    if st.button('Start Timer'):
-        start_timer()
-
-# Timer logic
-if st.session_state.timer_started and not st.session_state.timer_end:
-    current_time = time.time()
-    if st.session_state.time_left > 0:
-        st.session_state.time_left -= 1
-        time.sleep(1)  # Update every second
-    else:
-        st.session_state.timer_end = True
-
-# Counter button, enabled only when the timer is running
-if st.session_state.timer_started and not st.session_state.timer_end:
-    _, button_col, _ = st.columns([1, 2, 1])
-    with button_col:
+with button_col:
+    if not st.session_state.timer_started:
+        if st.button('Double Click to Start Timer'):
+            start_timer()
+    elif not st.session_state.timer_end:
         if st.button('Increment Counter'):
             increment_counter()
+
+# Main loop for updating the timer
+while st.session_state.timer_started and not st.session_state.timer_end:
+    elapsed_time = time.time() - st.session_state.start_time
+    st.session_state.time_left = max(0, 60 - int(elapsed_time))
+    update_card_content()
+    
+    if st.session_state.time_left == 0:
+        st.session_state.timer_end = True
+    else:
+        time.sleep(0.1)  # Update every 0.1 seconds
+
+# Final update after the timer ends
+update_card_content()
 
 # When the timer ends, display the result
 if st.session_state.timer_end:
